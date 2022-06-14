@@ -1,38 +1,50 @@
 """ Get day type - normal day, holiday, etc. Based on Warsaw Transport Authority timetable data, of all things """
 
 import ftplib
+import os
 import datetime
+import json
+from pathlib import Path
 
 
-def get_file():
+
+def _get_file(today_obj=datetime.datetime.now()):
     """ Download timetable data from Warsaw Transport Authority """
-    today = datetime.datetime.now()
-    today = today.strftime('%y%m%d')
-
     ftp = ftplib.FTP('rozklady.ztm.waw.pl')
     ftp.login()
 
-    with open('timetable.7z', 'wb') as fp:
-        ftp.retrbinary(f'RETR RA{today}.7z', fp.write)
+    with open(Path(__file__).parent / 'data' / 'timetable.7z', 'wb') as fp:
+        for i in range(-1, 7):
+            try:
+                # We try until we find any file near to todsays date
+                today_obj += datetime.timedelta(days=i)
+                today_str = today_obj.strftime('%y%m%d')
+                ftp.retrbinary(f'RETR RA{today_str}.7z', fp.write)
+                print('File found - ', today_str)
+                break
+            except ftplib.error_perm:
+                print('File not found - ', today_str)
 
     ftp.quit()
 
     try:
         import py7zr
-        with py7zr.SevenZipFile("timetable.7z", 'r') as archive:
-            archive.extractall()
+        with open(Path(__file__).parent / 'data' / 'timetable.7z', 'rb') as fp:
+            with py7zr.SevenZipFile(fp) as archive:
+                archive.extractall(path=Path(__file__).parent / 'data')
     except ImportError:
         print('py7zr not installed; Cannot unpack data')
         print('pip install py7zr')
         raise Exception('py7zr not installed')
+    
+    return today_str
 
-def get_day_type(f):
-    """ Weekday, Weekend, or Holiday. If 2 types are possible, returns in this order: weekend > holiday > weekday """
-    mode = 'TY'  # or KA
+def _get_calendar(f):
     days = {
-        'timestamp': 'weekday|weekend|holiday',
+        # 'timestamp': 'free|working',
     }
 
+    mode = 'TY'  # or KA
     for line in f:
         if line.startswith('#KA'):
             break
@@ -47,6 +59,47 @@ def get_day_type(f):
             day = line[0]
             candidates = line[2:-1]
             if 'DP' in candidates:
-                return 'working'
+                days[day] = 'working'
             elif 'DS' in candidates:
-                return 'free'
+                days[day] = 'free'
+
+    return days
+
+def get_calendar(today_obj=datetime.datetime.now()):
+    found = False
+    files = os.listdir(Path(__file__).parent / 'data')
+    # Try finding file in current directory
+    for i in range(-1, 7):
+        today_obj += datetime.timedelta(days=i)
+        today_str = today_obj.strftime('%y%m%d')
+        if f'RA{today_str}.TXT' in files:
+            print('File found - ', today_str)
+            found = today_str
+            break
+
+    if found:
+        # src TXT file found, check if it was already parsed
+        if f'days_{found}.json' in files:
+            print('Calendar already parsed - ', found)
+            with open(Path(__file__).parent / 'data' / f'days_{found}.json', 'r') as f:
+                return json.load(f)
+        else:
+            print('Parsing calendar - ', found)
+            with open(Path(__file__).parent / 'data' / f'RA{found}.TXT', 'r') as f:
+                days = _get_calendar(f)
+                with open(Path(__file__).parent / 'data' / f'days_{found}.json', 'w') as f:
+                    json.dump(days, f)
+                return days
+    else: # File not found, download it
+        print('File not found, downloading - ')
+        today_str = _get_file()
+        with open(Path(__file__).parent / 'data' / f'RA{today_str}.TXT', 'r') as f:
+            days = _get_calendar(f)
+            with open(Path(__file__).parent / 'data' / f'days_{today_str}.json', 'w') as f:
+                json.dump(days, f)
+            return days
+
+
+if __name__ == '__main__':
+    from rich import print
+    print(get_calendar())

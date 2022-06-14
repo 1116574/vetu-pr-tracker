@@ -1,5 +1,5 @@
 import json
-
+from constants import CITIES
 import sqlite3
 import requests
 
@@ -9,16 +9,18 @@ conn = sqlite3.connect('bikes.db')
 cur = conn.cursor()
 
 # Download data from gbfs
-data = requests.get(BIKES_URL)
-data.raise_for_status()
-data = data.json()['data']['stations']
-# TODO: some freshness check?
+data = []
+for city in CITIES:
+    city_data = requests.get(city.bike_url + 'station_status.json').json()['data']['stations']
+    # TODO: some freshness check?
 
-# Create table with columns for every station
-#     in UTC |  DP/SB... | clear, sunny... | Kelvin  |     m/s     |    %    | in mm, last hour
-ids = ['time', 'day_type', 'condition', 'temperature', 'wind_speed', 'clouds', 'rain']
-for st in data:
-    ids.append(st['station_id'])
+    # Create table with columns for every station
+    #     in UTC |  DP/SB... | clear, sunny... | Kelvin  |     m/s     |    %    | in mm, last hour
+    ids = ['time', 'day_type', 'condition', 'temperature', 'wind_speed', 'clouds', 'rain']
+    for st in city_data:
+        ids.append(st['station_id'])
 
-cur.execute(f'''CREATE TABLE bikes {str(tuple(ids))}''', )
+    cur.execute(f'''CREATE TABLE "{city.name.lower()}" {str(tuple(ids))}''', )
+
+
 conn.close()
