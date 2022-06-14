@@ -12,7 +12,7 @@ from rich import print
 from constants import CITIES
 
 # Get todays type - working or free
-day_type = get_calendar('220615')[datetime.datetime.now().strftime('%Y-%m-%d')]
+day_type = get_calendar()[datetime.datetime.now().strftime('%Y-%m-%d')]
 
 utc_timestamp = datetime.datetime.utcnow().timestamp()
 

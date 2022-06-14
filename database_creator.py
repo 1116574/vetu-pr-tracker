@@ -1,9 +1,11 @@
 import json
+import os
 from constants import CITIES
 import sqlite3
 import requests
 
 BIKES_URL = 'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vp/pl/station_status.json'
+os.mkdir('data')
 
 conn = sqlite3.connect('bikes.db')
 cur = conn.cursor()
