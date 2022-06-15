@@ -85,7 +85,7 @@ def get_calendar(today_obj=datetime.datetime.now()):
                 return json.load(f)
         else:
             print('Parsing calendar - ', found)
-            with open(Path(__file__).parent / 'data' / f'RA{found}.TXT', 'r') as f:
+            with open(Path(__file__).parent / 'data' / f'RA{found}.TXT', 'r', encoding='1250') as f:
                 days = _get_calendar(f)
                 with open(Path(__file__).parent / 'data' / f'days_{found}.json', 'w') as f:
                     json.dump(days, f)
@@ -93,7 +93,7 @@ def get_calendar(today_obj=datetime.datetime.now()):
     else: # File not found, download it
         print('File not found, downloading - ')
         today_str = _get_file()
-        with open(Path(__file__).parent / 'data' / f'RA{today_str}.TXT', 'r') as f:
+        with open(Path(__file__).parent / 'data' / f'RA{today_str}.TXT', 'r', encoding='1250') as f:
             days = _get_calendar(f)
             with open(Path(__file__).parent / 'data' / f'days_{today_str}.json', 'w') as f:
                 json.dump(days, f)
