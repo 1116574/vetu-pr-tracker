@@ -3,19 +3,30 @@ import sqlite3
 import datetime
 import sqlite3
 
-from apikeys import *
 from day_type import get_calendar
 
 import requests
 from rich import print
 
-from constants import CITIES
+import os
+from pathlib import Path
+
+if os.path.exists(Path(__file__).parent / 'apikeys.py'):
+    from constants import CITIES, PARKINGS_URL
+    from apikeys import WARSAW, OPENWEATHER
+else:
+    with open(Path(__file__).parent / 'apikeys.py', 'w') as f:
+        f.write('OPENWEATHER = \nWARSAW = \n')
+    print('Please fill out apikeys.py with your API keys first')
+    quit()
 
 # Get todays type - working or free
 day_type = get_calendar()[datetime.datetime.now().strftime('%Y-%m-%d')]
 
 utc_timestamp = datetime.datetime.utcnow().timestamp()
 
+
+### Bikes
 for city in CITIES:
     # Get fields
     conn = sqlite3.connect('bikes.db')
@@ -52,8 +63,21 @@ for city in CITIES:
     conn.commit()
     conn.close()
 
-# print(fields)
-# quit()
+### Parkings
+conn = sqlite3.connect('parkings.db')
+cur = conn.cursor()
+parkings = requests.get(PARKINGS_URL).json()['result']['Parks']
+for parking in parkings:
+    entry = (
+        utc_timestamp,
+        day_type,
+        parking['name'],
+        parking['free_places_total']['disabled'],
+        parking['free_places_total']['public'],
+        parking['free_places_total']['electric'],
+    )
 
-# conn = sqlite3.connect('bikes.db')
-# cur = conn.cursor()
+    cur.execute(f'insert into parkings values {entry}')
+    conn.commit()
+
+conn.close()

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from apikeys import WARSAW
 
 
 @dataclass
@@ -16,3 +17,5 @@ CITIES = [
     City('Grodzisk Mazowiecki', 52.106322, 20.633080, 'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_gp/pl/'),
     City('Żyrardów', 52.049479, 20.445386, 'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_zy/pl/'),
 ]
+
+PARKINGS_URL = f'https://api.um.warszawa.pl/api/action/parking_get_list/?apikey={WARSAW}'
