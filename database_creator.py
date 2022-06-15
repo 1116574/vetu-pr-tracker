@@ -11,7 +11,7 @@ BIKES_URL = 'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_vp/pl/station_statu
 if not os.path.exists(Path(__file__).parent / 'data'):
     os.mkdir(Path(__file__).parent / 'data')
 
-conn = sqlite3.connect('bikes.db')
+conn = sqlite3.connect(Path(__file__).parent / 'bikes.db')
 cur = conn.cursor()
 
 # Download data from gbfs
@@ -32,7 +32,7 @@ for city in CITIES:
 conn.close()
 
 ### P+R
-conn = sqlite3.connect('parkings.db')
+conn = sqlite3.connect(Path(__file__).parent / 'parkings.db')
 cur = conn.cursor()
 cur.execute(f'''CREATE TABLE parkings (time, day_type, name, disable, public, electric)''', )
 conn.commit()

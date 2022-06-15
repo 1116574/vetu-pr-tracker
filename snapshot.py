@@ -29,7 +29,7 @@ utc_timestamp = datetime.datetime.utcnow().timestamp()
 ### Bikes
 for city in CITIES:
     # Get fields
-    conn = sqlite3.connect('bikes.db')
+    conn = sqlite3.connect(Path(__file__).parent / 'bikes.db')
     # This is used to ensure correct ids land in correct columns.
     # Nextbike API has consistent ordering, but better be prepared for when it changes or we use a different provider.
     cur = conn.execute(f'select * from "{city.name.lower()}"')
@@ -57,14 +57,14 @@ for city in CITIES:
     fields[5] = weather['clouds']['all']
     fields[6] = weather.get('rain', {}).get('1h', 0)
 
-    conn = sqlite3.connect('bikes.db')
+    conn = sqlite3.connect(Path(__file__).parent / 'bikes.db')
     cur = conn.cursor()
     cur.execute(f'insert into "{city.name.lower()}" values {str(tuple(fields))}')
     conn.commit()
     conn.close()
 
 ### Parkings
-conn = sqlite3.connect('parkings.db')
+conn = sqlite3.connect(Path(__file__).parent / 'parkings.db')
 cur = conn.cursor()
 parkings = requests.get(PARKINGS_URL).json()['result']['Parks']
 for parking in parkings:
